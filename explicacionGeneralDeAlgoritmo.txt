@@ -1,0 +1,89 @@
+Explicacion General del Programa:
+
+Tiene los siguientes cambios c/r a verison v1.:
+a) delta de acercamiento=0.005 ( aprox medio pixel con la escala
+1. x 1. <=> 100x100 pixeles) . Esto hace mas seguro el algoritmo de cruce de C.de Bezier
+b) La rutina de deteccion de cruces en (PiezaH.java) tiene doble chequeo de cruces. Lo que tambien
+da mas seguridad.
+c)Finalmente, para compznsar el tiempo adicional de chequeo de a) y b) , la columnas se acercan
+saltando la distancia minima que se han acercado las piezas de las columnas anteriores. Esto evita 
+que las ultimas columnas deban recorrer en incrementos de: delta toda la separacion acumulada.
+
+
+
+
+
+1. Se generan imagenes *.svg en Inkscape:
+1.a Las imagenes son construidas con curbas de Bezier.
+1.b Las imagenes no estan llenas , ni coloreadas, ni tienen
+    un stroke de dibujo especial. Solo son lineas continuas.
+    Pueden estars abiertas o cerradas.
+1.c Una imagen se compone en general, de varias secuencias 
+    independientes de curbas de Bezier, que constituyen en conjunto la
+    imagen.
+1.d Las curbas de bezier en una imagen pueden definirse como visibles
+    o no, simplemente defininiendo que el parametro: stroke sea :none
+1.e Uno puede usar el siguiente procedimiento para definir espacios
+    vacios dentro de imagenes visibles. Por ejemplo, el espacio que
+    esta dentro de la letra O(dentro del circulo interno de la letra O, si
+    esta esta dibujada por dos circulos concentricos):
+ 	i-Uno dibuja un rectangulo, con una opcion de dibujo de Inkscape que  
+ 	no esta construida con curbas de Bezier. Uno la construye con llenado y 
+ 	stroke seteado a: NONE, y al final le indica al programa que la convierta
+ 	en un PATH construido con curbas de Bezier. Esto hara que se guarden en el
+ 	file de la imagen los datos del rectangulo.
+ 	ii- Luego, cuando uno utilice un programa que analice la imagen podra
+ 	obtener facilmente la informacion numerica del agujero que contiene
+ 	la imagen.  
+1.f Las imagenes obtenidas de Inkscape se deben guardar con un nombre 
+    sugerente en el directorio: bin/cortador/objetos/inkscape_svg_ 
+    del  arbol de directorio donde estan las classes compiladas.
+    (Aqui:cortador/objetos/inkscape_svg es el directorio c/r al directorio
+    del pakete : cortador).
+    
+    
+ 2. La primera parte del programa es el "parsing" de las imagenes de Inkscape.
+    Se generan 3 versiones del archivo, cada vez mas simplificadas:
+    simple_sw_<nombre>.svg ,bezier_simple_sw_<nombre>.svg y  normal_bezier_simple_sw_<nombre>.svg,
+    donde <nombre> es el nombre del archivo original de Inkscape.
+    
+ 3. El programa usa los archivos: normal_bezier_simple_sw_<nombre>.svg para obtener
+    la version normalizada de las figuras. (Las figuras quedan inscrita exactamente en un cuadrado
+     de lado 1.0, con origen en (0.,0.)) . Luego, es suficiente multiplicar por un escalamiento 
+     cualquiera las componentes (x,y) de los vectores de Bezier de cada imagen para cambiar su tamano.
+     Si se agrega a cada vector de Bezier una constante, se logra deplazar el origen de la figura
+     al lugar que se desee.
+ 
+ 5. El procedimiento de ordenacion de las figuras consta de dos etapas principales:
+ 
+ Aa. Cada figura se considera contenida en una caja virtual que la contiene exactamente. Esta
+     es simplemente el rectangulo donde estan la curbas de Bezier de la imagen, escaladas en sus
+     dos dimensiones.
+ Ab. Se ordenan las diemensiones de figuras de manera que siempre el ancho sea mas angosto que el alto.
+ Ac. Su calcula el area de la caja de cada figura.
+ Ad. Se ordenan las cajas en una lista de mayor a menor area. 
+ Ae. Se introducen las cajas de cada figura dentro de los agujeros (invisibles) de las cajas mas 
+     grandes formando columnas que llenen lo mas eficientemente cada agujero.  Las columnas quedan
+     apiladas una detras de otras cerca de una de las paredes del agujero. Esto se hace desde las
+     cajas mas pequenas hasta las cajas mas grandes. Al final, las cajas grandes quedaran formnado
+     columnas en la correa de corte, que se considera como una caja con un solo agujero gigante
+     que permite una cantidad arbitraria de cajas. Esto permite la primera compresion en la 
+     distancia maxima cubierta por las cajas de las figuras sobre la correa de corte.
+   
+     
+  Ba. Se aproximan en la direccion X las cajas que estan sobre la correa de corte hasta que se
+       toquen entre si.(La correa tiene alto fijo Ymax y ancho de llenado X variable. Se trata de 
+       minimizar X con un ordenamiento optimo de las cajas). Este procedimiento de acercamiento se
+       hace considerando las curbas de Bezier que estan dentro de las cajas, no con las cajas mismas.
+        Es decir, las figuras de Bezier arrastran a sus cajas, y no al revez.  Para esto se debe
+       considerar el cruzamiento de las curbas de Bezier de dos figuras cuando se las acerca.
+  Bb. El acercamiento es solo entre las cajas que estan sobre la correa de corte. Estas arrastran a su
+       vez, a todas las cajas que tienen insertadas en sus agujeros. Pero se debe utilizar las curbas
+       de Bezier de las figuras de las cajas internas para decidir si hay contacto o no, pues los
+       agujeros pueden ser abiertos y exponer la superficie de las figuras que contienen. Por ejemplo,
+       la letra E tiene dos agujeros en el lado derecho que podrian contener figuras. Si hay una caja
+       a la derecha de la E , esta podria tocar a alguna de las figuras guardadas en los agujeros de la
+       E.
+       
+       
+ 
